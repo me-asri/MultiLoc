@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:tools="http://schemas.android.com/tools"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    tools:viewBindingIgnore="true">
+
+    <item
+        android:id="@+id/locationProviderItem"
+        android:title="@string/item_title_location_provider"
+        app:actionLayout="@layout/item_provider_spinner"
+        app:showAsAction="always"
+        tools:ignore="AlwaysShowAction" />
+
+    <item
+        android:id="@+id/locateItem"
+        android:title="@string/item_title_locate"
+        android:icon="@android:drawable/ic_menu_compass"
+        app:showAsAction="always"
+        tools:ignore="AlwaysShowAction" />
+</menu>

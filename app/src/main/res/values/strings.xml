@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">MultiLoc</string>
+
+    <string name="item_title_location_provider">Location Provider</string>
+    <string name="item_title_locate">Locate</string>
+
+    <string name="text_location">Lat: %1$f - Lon: %2$f</string>
+</resources>
