@@ -42,6 +42,8 @@ public class MainActivity extends AppCompatActivity {
     private LocationManager mLocationManager;
 
     private IMapController mMapController;
+    private Marker mLastMapMarker = null;
+
 
     private final IPLocation mIPLocation = new IPLocation();
     private final BTSLocation mBTSLocation = new BTSLocation();
@@ -112,14 +114,24 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void showPointOnMap(double lat, double lon) {
-        mMapController.setCenter(new GeoPoint(lat, lon));
-        mMapController.setZoom(12.0);
+        GeoPoint geoPoint = new GeoPoint(lat, lon);
+        // Zoom in
+        mMapController.setZoom(18.5);
 
-        Marker marker = new Marker(mBinding.map);
-        marker.setPosition(new GeoPoint(lat, lon));
-        marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
-        mBinding.map.getOverlays().add(marker);
+        // Center map to the specified location
+        mMapController.setCenter(geoPoint);
 
+        // Remove previous marker if any
+        if (mLastMapMarker != null) {
+            mBinding.map.getOverlays().remove(mLastMapMarker);
+            mLastMapMarker = null;
+        }
+
+        // Add new marker
+        mLastMapMarker = new Marker(mBinding.map);
+        mLastMapMarker.setPosition(geoPoint);
+        mLastMapMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
+        mBinding.map.getOverlays().add(mLastMapMarker);
     }
 
     private void useIPLocation() {
