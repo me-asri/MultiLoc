@@ -18,6 +18,13 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.AppCompatSpinner;
 
+import org.osmdroid.api.IMapController;
+import org.osmdroid.config.Configuration;
+import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
+import org.osmdroid.util.GeoPoint;
+import org.osmdroid.views.MapView;
+import org.osmdroid.views.overlay.Marker;
+
 import java.util.function.Consumer;
 
 import github.me_asri.multiloc.databinding.ActivityMainBinding;
@@ -26,12 +33,15 @@ import github.me_asri.multiloc.location.IPLocation;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = MainActivity.class.getName();
+    private static final String SHARED_PREF_OSMDROID = TAG + ".osmdroid_pref";
 
     private ActivityMainBinding mBinding;
 
     private String mSelectedProvider;
 
     private LocationManager mLocationManager;
+
+    private IMapController mMapController;
 
     private final IPLocation mIPLocation = new IPLocation();
     private final BTSLocation mBTSLocation = new BTSLocation();
@@ -49,6 +59,21 @@ public class MainActivity extends AppCompatActivity {
         setContentView(root);
 
         mLocationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+
+        // osmdroid configuration
+        Configuration.getInstance().load(this, getSharedPreferences(SHARED_PREF_OSMDROID, 0));
+        // osmdroid map source
+        mBinding.map.setTileSource(TileSourceFactory.MAPNIK);
+
+        // Allow horizontal map repetition
+        mBinding.map.setHorizontalMapRepetitionEnabled(true);
+        // Prevent vertical map repetition
+        mBinding.map.setVerticalMapRepetitionEnabled(false);
+        // Limit vertical scrolling
+        mBinding.map.setScrollableAreaLimitLatitude(MapView.getTileSystem().getMaxLatitude(), MapView.getTileSystem().getMinLatitude(), 0);
+
+        mMapController = mBinding.map.getController();
+        mMapController.setZoom(2.5);
     }
 
     @Override
@@ -86,6 +111,17 @@ public class MainActivity extends AppCompatActivity {
         return true;
     }
 
+    private void showPointOnMap(double lat, double lon) {
+        mMapController.setCenter(new GeoPoint(lat, lon));
+        mMapController.setZoom(12.0);
+
+        Marker marker = new Marker(mBinding.map);
+        marker.setPosition(new GeoPoint(lat, lon));
+        marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
+        mBinding.map.getOverlays().add(marker);
+
+    }
+
     private void useIPLocation() {
         mIPLocation.getLocation((r, t) -> {
             if (t != null) {
@@ -98,6 +134,7 @@ public class MainActivity extends AppCompatActivity {
             }
 
             mBinding.locText.setText(getString(R.string.text_location, r.lat, r.lon));
+            showPointOnMap(r.lat, r.lon);
         });
     }
 
@@ -121,6 +158,7 @@ public class MainActivity extends AppCompatActivity {
             }
 
             mBinding.locText.setText(getString(R.string.text_location, r.lat, r.lon));
+            showPointOnMap(r.lat, r.lon);
         });
     }
 
@@ -132,7 +170,10 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
-        Consumer<Location> locationCallback = l -> mBinding.locText.setText(getString(R.string.text_location, l.getLatitude(), l.getLongitude()));
+        Consumer<Location> locationCallback = l -> {
+            mBinding.locText.setText(getString(R.string.text_location, l.getLatitude(), l.getLongitude()));
+            showPointOnMap(l.getLatitude(), l.getLongitude());
+        };
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             mLocationManager.getCurrentLocation(LocationManager.GPS_PROVIDER, null, getMainExecutor(), locationCallback);
