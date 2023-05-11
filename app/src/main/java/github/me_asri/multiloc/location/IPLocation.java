@@ -1,5 +1,7 @@
 package github.me_asri.multiloc.location;
 
+import android.os.CancellationSignal;
+
 import androidx.annotation.NonNull;
 
 import java.util.function.BiConsumer;
@@ -25,8 +27,9 @@ public class IPLocation {
         mService = retrofit.create(APIService.class);
     }
 
-    public void getLocation(BiConsumer<Result, Throwable> callback) {
-        mService.getLocation().enqueue(new Callback<Result>() {
+    public void getLocation(CancellationSignal cancelSignal, BiConsumer<Result, Throwable> callback) {
+        Call<Result> serviceCall = mService.getLocation();
+        serviceCall.enqueue(new Callback<Result>() {
             @Override
             public void onResponse(@NonNull Call<Result> call, @NonNull Response<Result> response) {
                 Result result = response.body();
@@ -40,6 +43,10 @@ public class IPLocation {
                 }
             }
         });
+
+        if (cancelSignal != null) {
+            cancelSignal.setOnCancelListener(serviceCall::cancel);
+        }
     }
 
     public static class Result {

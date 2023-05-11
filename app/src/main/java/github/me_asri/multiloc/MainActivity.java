@@ -135,7 +135,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void useIPLocation() {
-        mIPLocation.getLocation((r, t) -> {
+        mIPLocation.getLocation(null, (r, t) -> {
             if (t != null) {
                 Log.e(TAG, "onIPButtonClick: ", t);
                 Toast.makeText(MainActivity.this, "Exception occurred: " + t.getLocalizedMessage(), Toast.LENGTH_LONG).show();
