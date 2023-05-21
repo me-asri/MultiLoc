@@ -17,6 +17,7 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.AppCompatSpinner;
+import androidx.core.location.LocationManagerCompat;
 
 import org.osmdroid.api.IMapController;
 import org.osmdroid.config.Configuration;
@@ -114,6 +115,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void showPointOnMap(double lat, double lon) {
+        mBinding.locText.setVisibility(View.VISIBLE);
+        mBinding.locText.setText(getString(R.string.text_location, lat, lon));
+
         GeoPoint geoPoint = new GeoPoint(lat, lon);
         // Zoom in
         mMapController.setZoom(18.5);
@@ -145,7 +149,6 @@ public class MainActivity extends AppCompatActivity {
                 return;
             }
 
-            mBinding.locText.setText(getString(R.string.text_location, r.lat, r.lon));
             showPointOnMap(r.lat, r.lon);
         });
     }
@@ -158,10 +161,15 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
+        if (!LocationManagerCompat.isLocationEnabled(mLocationManager)) {
+            Toast.makeText(this, "Location not enabled", Toast.LENGTH_LONG).show();
+            return;
+        }
+
         mBTSLocation.getLocation(this, null, (r, t) -> {
             if (t != null) {
-                Log.e(TAG, "onIPButtonClick: ", t);
-                Toast.makeText(MainActivity.this, "Exception occurred: " + t.getLocalizedMessage(), Toast.LENGTH_LONG).show();
+                Log.e(TAG, "onBTSLocation: ", t);
+                Toast.makeText(MainActivity.this, "Exception occurred: " + t, Toast.LENGTH_LONG).show();
                 return;
             }
             if (r == null) {
@@ -169,7 +177,6 @@ public class MainActivity extends AppCompatActivity {
                 return;
             }
 
-            mBinding.locText.setText(getString(R.string.text_location, r.lat, r.lon));
             showPointOnMap(r.lat, r.lon);
         });
     }
@@ -182,8 +189,17 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
+        if (!LocationManagerCompat.isLocationEnabled(mLocationManager)) {
+            Toast.makeText(this, "Location not enabled", Toast.LENGTH_LONG).show();
+            return;
+        }
+
         Consumer<Location> locationCallback = l -> {
-            mBinding.locText.setText(getString(R.string.text_location, l.getLatitude(), l.getLongitude()));
+            if (l == null) {
+                Toast.makeText(this, "Received null location", Toast.LENGTH_LONG).show();
+                return;
+            }
+
             showPointOnMap(l.getLatitude(), l.getLongitude());
         };
 

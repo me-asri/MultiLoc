@@ -46,28 +46,29 @@ public class BTSLocation {
                 @Override
                 public void onCellInfo(@NonNull List<CellInfo> cellInfoList) {
                     CellInfo cell = cellInfoList.stream()
-                            .filter(CellInfo::isRegistered)
                             .findFirst().orElse(null);
                     if (cell == null) {
-                        throw new NoRegisteredCellException();
+                        // No cells found
+                        callback.accept(null, new NoCellsException());
+                        return;
                     }
-                    Call<Result> serviceCall = getBTSLocation(cell, callback);
 
-                    if (cancelSignal != null) {
+                    Call<Result> serviceCall = getBTSLocation(cell, callback);
+                    if (cancelSignal != null && serviceCall != null) {
                         cancelSignal.setOnCancelListener(serviceCall::cancel);
                     }
                 }
             });
         } else {
             CellInfo cellInfo = tm.getAllCellInfo().stream()
-                    .filter(CellInfo::isRegistered)
                     .findFirst().orElse(null);
             if (cellInfo == null) {
-                throw new NoRegisteredCellException();
+                callback.accept(null, new NoCellsException());
+                return;
             }
-            Call<Result> serviceCall = getBTSLocation(cellInfo, callback);
 
-            if (cancelSignal != null) {
+            Call<Result> serviceCall = getBTSLocation(cellInfo, callback);
+            if (cancelSignal != null && serviceCall != null) {
                 cancelSignal.setOnCancelListener(serviceCall::cancel);
             }
         }
@@ -79,7 +80,8 @@ public class BTSLocation {
             CellIdentityLte identity = ((CellInfoLte) cellInfo).getCellIdentity();
             serviceCall = service.getCellLocation(identity.getMcc(), identity.getMnc(), identity.getTac(), identity.getCi());
         } else {
-            throw new UnknownCellTypeException();
+            callback.accept(null, new UnknownCellTypeException());
+            return null;
         }
 
         serviceCall.enqueue(new Callback<Result>() {
@@ -120,7 +122,7 @@ public class BTSLocation {
     public static class BTSException extends RuntimeException {
     }
 
-    public static class NoRegisteredCellException extends BTSException {
+    public static class NoCellsException extends BTSException {
     }
 
     public static class UnknownCellTypeException extends BTSException {
