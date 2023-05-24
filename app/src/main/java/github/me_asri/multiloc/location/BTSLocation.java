@@ -6,9 +6,11 @@ import android.os.Build;
 import android.os.CancellationSignal;
 import android.telephony.CellIdentityGsm;
 import android.telephony.CellIdentityLte;
+import android.telephony.CellIdentityWcdma;
 import android.telephony.CellInfo;
 import android.telephony.CellInfoGsm;
 import android.telephony.CellInfoLte;
+import android.telephony.CellInfoWcdma;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 
@@ -92,6 +94,12 @@ public class BTSLocation {
             mnc = identity.getMnc();
             tac = identity.getTac();
             ci = identity.getCi();
+        } else if (cellInfo instanceof CellInfoWcdma) {
+            CellIdentityWcdma identity = ((CellInfoWcdma) cellInfo).getCellIdentity();
+            mcc = identity.getMcc();
+            mnc = identity.getMnc();
+            tac = identity.getLac();
+            ci = identity.getCid();
         } else if (cellInfo instanceof CellInfoGsm) {
             CellIdentityGsm identity = ((CellInfoGsm) cellInfo).getCellIdentity();
             mcc = identity.getMcc();
