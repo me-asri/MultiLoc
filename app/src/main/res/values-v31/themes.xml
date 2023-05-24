@@ -1,22 +1,20 @@
 <resources>
     <!-- Base application theme. -->
-    <style name="Base.Theme.MultiLoc" parent="Theme.Material3.DayNight">
+    <style name="Base.Theme.MultiLoc" parent="Theme.Material3.DynamicColors.DayNight">
         <!-- Customize your light theme here. -->
         <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
-        <item name="colorPrimary">@color/primary_700</item>
-        <item name="colorPrimaryDark">@color/primary_800</item>
 
         <item name="actionBarTheme">@style/Base.Theme.MultiLoc.ActionBar</item>
     </style>
 
     <style name="Base.Theme.MultiLoc.ActionBar" parent="ThemeOverlay.MaterialComponents.ActionBar">
         <!-- Change overflow icon color -->
-        <item name="colorControlNormal">@color/primary_700</item>
+        <item name="colorControlNormal">@android:color/system_accent1_600</item>
         <!-- Change drawable icon color -->
-        <item name="iconTint">@color/primary_700</item>
+        <item name="iconTint">@android:color/system_accent1_600</item>
         <!-- Change title text color -->
-        <item name="titleTextColor">@color/primary_700</item>
+        <item name="titleTextColor">@android:color/system_accent1_600</item>
     </style>
 
-    <style name="Theme.MultiLoc" parent="Base.Theme.MultiLoc" />
+    <style name="Theme.AnSu" parent="Base.Theme.MultiLoc" />
 </resources>
