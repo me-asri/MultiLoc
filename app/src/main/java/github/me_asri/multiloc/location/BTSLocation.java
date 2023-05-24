@@ -4,10 +4,13 @@ import android.Manifest;
 import android.content.Context;
 import android.os.Build;
 import android.os.CancellationSignal;
+import android.telephony.CellIdentityGsm;
 import android.telephony.CellIdentityLte;
 import android.telephony.CellInfo;
+import android.telephony.CellInfoGsm;
 import android.telephony.CellInfoLte;
 import android.telephony.TelephonyManager;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresPermission;
@@ -24,6 +27,7 @@ import retrofit2.http.GET;
 import retrofit2.http.Query;
 
 public class BTSLocation {
+    private static final String TAG = BTSLocation.class.getName();
     private static final String API_URL = "https://opencellid.org/ajax/";
 
     private final OpenCellIDService service;
@@ -46,7 +50,9 @@ public class BTSLocation {
                 @Override
                 public void onCellInfo(@NonNull List<CellInfo> cellInfoList) {
                     CellInfo cell = cellInfoList.stream()
-                            .findFirst().orElse(null);
+                            .filter(CellInfo::isRegistered)
+                            .findFirst()
+                            .orElse(null);
                     if (cell == null) {
                         // No cells found
                         callback.accept(null, new NoCellsException());
@@ -61,7 +67,9 @@ public class BTSLocation {
             });
         } else {
             CellInfo cellInfo = tm.getAllCellInfo().stream()
-                    .findFirst().orElse(null);
+                    .filter(CellInfo::isRegistered)
+                    .findFirst()
+                    .orElse(null);
             if (cellInfo == null) {
                 callback.accept(null, new NoCellsException());
                 return;
@@ -76,13 +84,31 @@ public class BTSLocation {
 
     private Call<Result> getBTSLocation(CellInfo cellInfo, BiConsumer<Result, Throwable> callback) {
         Call<Result> serviceCall;
+
+        int mcc, mnc, tac, ci;
         if (cellInfo instanceof CellInfoLte) {
             CellIdentityLte identity = ((CellInfoLte) cellInfo).getCellIdentity();
-            serviceCall = service.getCellLocation(identity.getMcc(), identity.getMnc(), identity.getTac(), identity.getCi());
+            mcc = identity.getMcc();
+            mnc = identity.getMnc();
+            tac = identity.getTac();
+            ci = identity.getCi();
+        } else if (cellInfo instanceof CellInfoGsm) {
+            CellIdentityGsm identity = ((CellInfoGsm) cellInfo).getCellIdentity();
+            mcc = identity.getMcc();
+            mnc = identity.getMnc();
+            tac = identity.getLac();
+            ci = identity.getCid();
         } else {
             callback.accept(null, new UnknownCellTypeException());
             return null;
         }
+
+        Log.i(TAG, "getBTSLocation: " +
+                "MCC: " + mcc +
+                " MNC: " + mnc +
+                " TAC: " + tac +
+                " CI: " + ci);
+        serviceCall = service.getCellLocation(mcc, mnc, tac, ci);
 
         serviceCall.enqueue(new Callback<Result>() {
             @Override
