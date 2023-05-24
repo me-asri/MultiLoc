@@ -3,6 +3,7 @@ package github.me_asri.multiloc;
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -15,6 +16,7 @@ import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.AppCompatSpinner;
 import androidx.core.location.LocationManagerCompat;
@@ -206,7 +208,24 @@ public class MainActivity extends AppCompatActivity {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             mLocationManager.getCurrentLocation(LocationManager.GPS_PROVIDER, null, getMainExecutor(), locationCallback);
         } else {
-            mLocationManager.requestSingleUpdate(LocationManager.GPS_PROVIDER, locationCallback::accept, null);
+            mLocationManager.requestSingleUpdate(LocationManager.GPS_PROVIDER, new LocationListener() {
+                @Override
+                public void onLocationChanged(@NonNull Location location) {
+                    locationCallback.accept(location);
+                }
+
+                @Override
+                public void onProviderEnabled(@NonNull String provider) {
+                }
+
+                @Override
+                public void onProviderDisabled(@NonNull String provider) {
+                }
+
+                @Override
+                public void onStatusChanged(String provider, int status, Bundle extras) {
+                }
+            }, null);
         }
     }
 
