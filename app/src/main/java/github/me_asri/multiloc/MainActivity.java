@@ -8,6 +8,7 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -24,10 +25,12 @@ import androidx.core.location.LocationManagerCompat;
 
 import org.osmdroid.api.IMapController;
 import org.osmdroid.config.Configuration;
+import org.osmdroid.tileprovider.tilesource.OnlineTileSourceBase;
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.Marker;
+import org.osmdroid.views.overlay.MinimapOverlay;
 
 import java.util.function.Consumer;
 
@@ -38,6 +41,7 @@ import github.me_asri.multiloc.location.IPLocation;
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = MainActivity.class.getName();
     private static final String SHARED_PREF_OSMDROID = TAG + ".osmdroid_pref";
+    private static final OnlineTileSourceBase MAP_TILE_SOURCE = TileSourceFactory.MAPNIK;
 
     private ActivityMainBinding mBinding;
 
@@ -49,8 +53,7 @@ public class MainActivity extends AppCompatActivity {
     private LocationManager mLocationManager;
 
     private IMapController mMapController;
-    private Marker mLastMapMarker = null;
-
+    private Marker mMapMarker = null;
 
     private final IPLocation mIPLocation = new IPLocation();
     private final BTSLocation mBTSLocation = new BTSLocation();
@@ -77,7 +80,7 @@ public class MainActivity extends AppCompatActivity {
         // osmdroid configuration
         Configuration.getInstance().load(this, getSharedPreferences(SHARED_PREF_OSMDROID, 0));
         // osmdroid map source
-        mBinding.map.setTileSource(TileSourceFactory.MAPNIK);
+        mBinding.map.setTileSource(MAP_TILE_SOURCE);
 
         // Allow horizontal map repetition
         mBinding.map.setHorizontalMapRepetitionEnabled(true);
@@ -88,6 +91,14 @@ public class MainActivity extends AppCompatActivity {
 
         mMapController = mBinding.map.getController();
         mMapController.setZoom(2.5);
+
+        DisplayMetrics dm = getResources().getDisplayMetrics();
+
+        MinimapOverlay minimap = new MinimapOverlay(this, mBinding.map.getTileRequestCompleteHandler());
+        minimap.setTileSource(MAP_TILE_SOURCE);
+        minimap.setWidth(dm.widthPixels / 5);
+        minimap.setHeight(dm.heightPixels / 5);
+        mBinding.map.getOverlays().add(minimap);
     }
 
     @Override
@@ -138,16 +149,17 @@ public class MainActivity extends AppCompatActivity {
         mMapController.setCenter(geoPoint);
 
         // Remove previous marker if any
-        if (mLastMapMarker != null) {
-            mBinding.map.getOverlays().remove(mLastMapMarker);
-            mLastMapMarker = null;
+        if (mMapMarker != null) {
+            mBinding.map.getOverlays().remove(mMapMarker);
+            mMapMarker = null;
         }
 
         // Add new marker
-        mLastMapMarker = new Marker(mBinding.map);
-        mLastMapMarker.setPosition(geoPoint);
-        mLastMapMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
-        mBinding.map.getOverlays().add(mLastMapMarker);
+        mMapMarker = new Marker(mBinding.map);
+        mMapMarker.setPosition(geoPoint);
+        mMapMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
+        mMapMarker.setTitle("Lat: " + lat + " - Lon: " + lon);
+        mBinding.map.getOverlays().add(mMapMarker);
     }
 
     private void displayPoint(double lat, double lon) {
@@ -235,7 +247,7 @@ public class MainActivity extends AppCompatActivity {
             mProgressDialog.dismiss();
 
             if (l == null) {
-                Toast.makeText(this, "Received null location", Toast.LENGTH_LONG).show();
+                Toast.makeText(this, "Failed to determine location", Toast.LENGTH_LONG).show();
                 return;
             }
 
