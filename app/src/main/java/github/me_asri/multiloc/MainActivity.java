@@ -53,7 +53,7 @@ public class MainActivity extends AppCompatActivity {
     private LocationManager mLocationManager;
 
     private IMapController mMapController;
-    private Marker mMapMarker = null;
+    private Marker mMapMarker;
 
     private final IPLocation mIPLocation = new IPLocation();
     private final BTSLocation mBTSLocation = new BTSLocation();
@@ -91,6 +91,8 @@ public class MainActivity extends AppCompatActivity {
 
         mMapController = mBinding.map.getController();
         mMapController.setZoom(2.5);
+
+        mMapMarker = new Marker(mBinding.map);
 
         DisplayMetrics dm = getResources().getDisplayMetrics();
 
@@ -148,17 +150,17 @@ public class MainActivity extends AppCompatActivity {
         // Center map to the specified location
         mMapController.setCenter(geoPoint);
 
-        // Remove previous marker if any
-        if (mMapMarker != null) {
-            mBinding.map.getOverlays().remove(mMapMarker);
-            mMapMarker = null;
-        }
+        // Remove previous marker
+        mMapMarker.closeInfoWindow();
+        mMapMarker.remove(mBinding.map);
 
-        // Add new marker
-        mMapMarker = new Marker(mBinding.map);
+        // Set marker position
         mMapMarker.setPosition(geoPoint);
         mMapMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
+        // Set info window text
         mMapMarker.setTitle("Lat: " + lat + " - Lon: " + lon);
+
+        // Add marker
         mBinding.map.getOverlays().add(mMapMarker);
     }
 
