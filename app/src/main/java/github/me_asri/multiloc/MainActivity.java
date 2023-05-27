@@ -1,6 +1,7 @@
 package github.me_asri.multiloc;
 
 import android.Manifest;
+import android.app.ProgressDialog;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationListener;
@@ -40,6 +41,9 @@ public class MainActivity extends AppCompatActivity {
 
     private ActivityMainBinding mBinding;
 
+    // TODO: replace ProgressDialog with ProgressBar
+    private ProgressDialog mProgressDialog;
+
     private String mSelectedProvider;
 
     private LocationManager mLocationManager;
@@ -62,6 +66,11 @@ public class MainActivity extends AppCompatActivity {
         mBinding = ActivityMainBinding.inflate(getLayoutInflater());
         View root = mBinding.getRoot();
         setContentView(root);
+        
+        mProgressDialog = new ProgressDialog(this);
+        mProgressDialog.setCancelable(false);
+        mProgressDialog.setTitle(R.string.app_name);
+        mProgressDialog.setMessage(getText(R.string.progress_dialog_message));
 
         mLocationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
 
@@ -141,7 +150,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void useIPLocation() {
+        mProgressDialog.show();
+
         mIPLocation.getLocation(null, (r, t) -> {
+            mProgressDialog.dismiss();
+
             if (t != null) {
                 Log.e(TAG, "onIPButtonClick: ", t);
                 Toast.makeText(MainActivity.this, "Exception occurred: " + t.getLocalizedMessage(), Toast.LENGTH_LONG).show();
@@ -159,7 +172,6 @@ public class MainActivity extends AppCompatActivity {
         if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             Toast.makeText(this, "Fine location permission required", Toast.LENGTH_SHORT).show();
             requestLocationPermission();
-
             return;
         }
 
@@ -168,9 +180,14 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
+        mProgressDialog.show();
+
         mBTSLocation.getLocation(this, null, (r, t) -> {
+            mProgressDialog.dismiss();
+
             if (t != null) {
                 Log.e(TAG, "onBTSLocation: ", t);
+
                 Toast.makeText(MainActivity.this, "Exception occurred: " + t, Toast.LENGTH_LONG).show();
                 return;
             }
@@ -196,7 +213,11 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
+        mProgressDialog.show();
+
         Consumer<Location> locationCallback = l -> {
+            mProgressDialog.dismiss();
+
             if (l == null) {
                 Toast.makeText(this, "Received null location", Toast.LENGTH_LONG).show();
                 return;
