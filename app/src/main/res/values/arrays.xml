@@ -4,5 +4,6 @@
         <item>IP</item>
         <item>BTS</item>
         <item>GPS</item>
+        <item>WiFi</item>
     </string-array>
 </resources>

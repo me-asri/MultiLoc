@@ -66,7 +66,7 @@ public class MainActivity extends AppCompatActivity {
         mBinding = ActivityMainBinding.inflate(getLayoutInflater());
         View root = mBinding.getRoot();
         setContentView(root);
-        
+
         mProgressDialog = new ProgressDialog(this);
         mProgressDialog.setCancelable(false);
         mProgressDialog.setTitle(R.string.app_name);
@@ -116,6 +116,10 @@ public class MainActivity extends AppCompatActivity {
 
             case "GPS":
                 useGPSLocation();
+                break;
+
+            case "WiFi":
+                useWiFiLocation();
                 break;
 
             default:
@@ -200,7 +204,7 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private void useGPSLocation() {
+    private void useAndroidLocation(String locationProvider) {
         if (checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             Toast.makeText(this, "Location permission required", Toast.LENGTH_SHORT).show();
             requestLocationPermission();
@@ -227,9 +231,9 @@ public class MainActivity extends AppCompatActivity {
         };
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            mLocationManager.getCurrentLocation(LocationManager.GPS_PROVIDER, null, getMainExecutor(), locationCallback);
+            mLocationManager.getCurrentLocation(locationProvider, null, getMainExecutor(), locationCallback);
         } else {
-            mLocationManager.requestSingleUpdate(LocationManager.GPS_PROVIDER, new LocationListener() {
+            mLocationManager.requestSingleUpdate(locationProvider, new LocationListener() {
                 @Override
                 public void onLocationChanged(@NonNull Location location) {
                     locationCallback.accept(location);
@@ -250,6 +254,14 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private void useGPSLocation() {
+        useAndroidLocation(LocationManager.GPS_PROVIDER);
+    }
+
+    private void useWiFiLocation() {
+        useAndroidLocation(LocationManager.NETWORK_PROVIDER);
+    }
+
     private void requestLocationPermission() {
         multiPermRequest.launch(new String[]{
                 Manifest.permission.ACCESS_FINE_LOCATION,
@@ -262,7 +274,7 @@ public class MainActivity extends AppCompatActivity {
         public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
             mSelectedProvider = (String) parent.getSelectedItem();
 
-            if (mSelectedProvider.equals("GPS") && checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            if ((mSelectedProvider.equals("GPS") || mSelectedProvider.equals("WiFi")) && checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                 requestLocationPermission();
             } else if (mSelectedProvider.equals("BTS") && checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                 requestLocationPermission();
