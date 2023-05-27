@@ -129,10 +129,7 @@ public class MainActivity extends AppCompatActivity {
         return true;
     }
 
-    private void showPointOnMap(double lat, double lon) {
-        mBinding.locText.setVisibility(View.VISIBLE);
-        mBinding.locText.setText(getString(R.string.text_location, lat, lon));
-
+    private void displayPointOnMap(double lat, double lon) {
         GeoPoint geoPoint = new GeoPoint(lat, lon);
         // Zoom in
         mMapController.setZoom(18.5);
@@ -153,6 +150,21 @@ public class MainActivity extends AppCompatActivity {
         mBinding.map.getOverlays().add(mLastMapMarker);
     }
 
+    private void displayPoint(double lat, double lon) {
+        mBinding.locText.setVisibility(View.VISIBLE);
+        mBinding.locText.setText(getString(R.string.text_location, lat, lon));
+
+        displayPointOnMap(lat, lon);
+    }
+
+    private void displayPoint(double lat, double lon, double alt, double speed, boolean mock) {
+        mBinding.locText.setVisibility(View.VISIBLE);
+        mBinding.locText.setText(getString(R.string.text_location_extra, lat, lon, alt, speed,
+                (mock) ? "true" : "false"));
+
+        displayPointOnMap(lat, lon);
+    }
+
     private void useIPLocation() {
         mProgressDialog.show();
 
@@ -168,7 +180,7 @@ public class MainActivity extends AppCompatActivity {
                 return;
             }
 
-            showPointOnMap(r.lat, r.lon);
+            displayPoint(r.lat, r.lon);
         });
     }
 
@@ -200,7 +212,7 @@ public class MainActivity extends AppCompatActivity {
                 return;
             }
 
-            showPointOnMap(r.lat, r.lon);
+            displayPoint(r.lat, r.lon);
         });
     }
 
@@ -227,7 +239,7 @@ public class MainActivity extends AppCompatActivity {
                 return;
             }
 
-            showPointOnMap(l.getLatitude(), l.getLongitude());
+            displayPoint(l.getLatitude(), l.getLongitude(), l.getAltitude(), l.getSpeed(), l.isFromMockProvider());
         };
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {

@@ -5,6 +5,7 @@
     <string name="item_title_locate">Locate</string>
 
     <string name="text_location">Lat: %1$f - Lon: %2$f</string>
+    <string name="text_location_extra">Lat: %1$f - Lon: %2$f\nAltitude: %3$f - Speed: %4$f - Mock: %5$s</string>
 
     <string name="progress_dialog_message">Fetching location…</string>
 </resources>

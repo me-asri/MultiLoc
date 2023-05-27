@@ -10,7 +10,7 @@
         android:layout_height="wrap_content"
         android:text="@string/text_location"
         android:textAlignment="center"
-        android:visibility="invisible" />
+        android:visibility="gone" />
 
     <org.osmdroid.views.MapView
         android:id="@+id/map"
