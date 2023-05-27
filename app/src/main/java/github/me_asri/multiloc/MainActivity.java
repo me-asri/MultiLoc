@@ -164,13 +164,6 @@ public class MainActivity extends AppCompatActivity {
         mBinding.map.getOverlays().add(mMapMarker);
     }
 
-    private void displayPoint(double lat, double lon) {
-        mBinding.locText.setVisibility(View.VISIBLE);
-        mBinding.locText.setText(getString(R.string.text_location, lat, lon));
-
-        displayPointOnMap(lat, lon);
-    }
-
     private void displayPoint(double lat, double lon, double alt, double speed, boolean mock) {
         mBinding.locText.setVisibility(View.VISIBLE);
         mBinding.locText.setText(getString(R.string.text_location_android, lat, lon, alt, speed,
@@ -201,7 +194,9 @@ public class MainActivity extends AppCompatActivity {
 
             if (t != null) {
                 Log.e(TAG, "onIPButtonClick: ", t);
+
                 Toast.makeText(MainActivity.this, "Exception occurred: " + t.getLocalizedMessage(), Toast.LENGTH_LONG).show();
+                return;
             }
             if (r == null) {
                 Toast.makeText(MainActivity.this, "Received empty response", Toast.LENGTH_LONG).show();
@@ -216,6 +211,7 @@ public class MainActivity extends AppCompatActivity {
         if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             Toast.makeText(this, "Fine location permission required", Toast.LENGTH_SHORT).show();
             requestLocationPermission();
+
             return;
         }
 
