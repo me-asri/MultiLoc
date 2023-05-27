@@ -253,7 +253,11 @@ public class MainActivity extends AppCompatActivity {
                 return;
             }
 
-            displayPoint(l.getLatitude(), l.getLongitude(), l.getAltitude(), l.getSpeed(), l.isFromMockProvider());
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                displayPoint(l.getLatitude(), l.getLongitude(), l.getAltitude(), l.getSpeed(), l.isMock());
+            } else {
+                displayPoint(l.getLatitude(), l.getLongitude(), l.getAltitude(), l.getSpeed(), l.isFromMockProvider());
+            }
         };
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
