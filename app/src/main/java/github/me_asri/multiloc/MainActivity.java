@@ -8,6 +8,8 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.CancellationSignal;
+import android.os.Handler;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Menu;
@@ -23,6 +25,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.AppCompatSpinner;
 import androidx.core.location.LocationManagerCompat;
 
+import com.google.gson.JsonSyntaxException;
+
 import org.osmdroid.api.IMapController;
 import org.osmdroid.config.Configuration;
 import org.osmdroid.tileprovider.tilesource.OnlineTileSourceBase;
@@ -32,7 +36,7 @@ import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.Marker;
 import org.osmdroid.views.overlay.MinimapOverlay;
 
-import java.util.function.Consumer;
+import java.net.SocketTimeoutException;
 
 import github.me_asri.multiloc.databinding.ActivityMainBinding;
 import github.me_asri.multiloc.location.BTSLocation;
@@ -42,6 +46,7 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG = MainActivity.class.getName();
     private static final String SHARED_PREF_OSMDROID = TAG + ".osmdroid_pref";
     private static final OnlineTileSourceBase MAP_TILE_SOURCE = TileSourceFactory.MAPNIK;
+    private static final int LOCATION_TIMEOUT_MS = 8000;
 
     private ActivityMainBinding mBinding;
 
@@ -195,7 +200,13 @@ public class MainActivity extends AppCompatActivity {
             if (t != null) {
                 Log.e(TAG, "onIPButtonClick: ", t);
 
-                Toast.makeText(MainActivity.this, "Exception occurred: " + t.getLocalizedMessage(), Toast.LENGTH_LONG).show();
+                if (t instanceof JsonSyntaxException) {
+                    Toast.makeText(MainActivity.this, "Received invalid response", Toast.LENGTH_LONG).show();
+                } else if (t instanceof SocketTimeoutException) {
+                    Toast.makeText(MainActivity.this, "Connection timed-out", Toast.LENGTH_LONG).show();
+                } else {
+                    Toast.makeText(MainActivity.this, "Exception occurred: " + t, Toast.LENGTH_LONG).show();
+                }
                 return;
             }
             if (r == null) {
@@ -228,7 +239,13 @@ public class MainActivity extends AppCompatActivity {
             if (t != null) {
                 Log.e(TAG, "onBTSLocation: ", t);
 
-                Toast.makeText(MainActivity.this, "Exception occurred: " + t, Toast.LENGTH_LONG).show();
+                if (t instanceof JsonSyntaxException) {
+                    Toast.makeText(MainActivity.this, "Received invalid response", Toast.LENGTH_LONG).show();
+                } else if (t instanceof SocketTimeoutException) {
+                    Toast.makeText(MainActivity.this, "Connection timed-out", Toast.LENGTH_LONG).show();
+                } else {
+                    Toast.makeText(MainActivity.this, "Exception occurred: " + t, Toast.LENGTH_LONG).show();
+                }
                 return;
             }
             if (r == null) {
@@ -255,28 +272,44 @@ public class MainActivity extends AppCompatActivity {
 
         mProgressDialog.show();
 
-        Consumer<Location> locationCallback = l -> {
-            mProgressDialog.dismiss();
-
-            if (l == null) {
-                Toast.makeText(this, "Failed to determine location", Toast.LENGTH_LONG).show();
-                return;
-            }
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                displayPoint(l.getLatitude(), l.getLongitude(), l.getAltitude(), l.getSpeed(), l.isMock());
-            } else {
-                displayPoint(l.getLatitude(), l.getLongitude(), l.getAltitude(), l.getSpeed(), l.isFromMockProvider());
-            }
-        };
-
+        Handler handler = new Handler(getMainLooper());
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            mLocationManager.getCurrentLocation(locationProvider, null, getMainExecutor(), locationCallback);
+            CancellationSignal locationCancelSignal = new CancellationSignal();
+            Runnable timeoutRunnable = () -> {
+                locationCancelSignal.cancel();
+
+                Toast.makeText(this, "Operation timed-out", Toast.LENGTH_LONG).show();
+                mProgressDialog.dismiss();
+            };
+
+            mLocationManager.getCurrentLocation(locationProvider, locationCancelSignal, getMainExecutor(), l -> {
+                handler.removeCallbacks(timeoutRunnable);
+
+                mProgressDialog.dismiss();
+
+                if (l == null) {
+                    Toast.makeText(this, "Failed to determine location", Toast.LENGTH_LONG).show();
+                    return;
+                }
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    displayPoint(l.getLatitude(), l.getLongitude(), l.getAltitude(), l.getSpeed(), l.isMock());
+                } else {
+                    displayPoint(l.getLatitude(), l.getLongitude(), l.getAltitude(), l.getSpeed(), l.isFromMockProvider());
+                }
+            });
+            handler.postDelayed(timeoutRunnable, LOCATION_TIMEOUT_MS);
         } else {
-            mLocationManager.requestSingleUpdate(locationProvider, new LocationListener() {
+            CancellationSignal timeoutCancelSignal = new CancellationSignal();
+
+            LocationListener locationListener = new LocationListener() {
                 @Override
-                public void onLocationChanged(@NonNull Location location) {
-                    locationCallback.accept(location);
+                public void onLocationChanged(@NonNull Location l) {
+                    timeoutCancelSignal.cancel();
+
+                    mProgressDialog.dismiss();
+
+                    displayPoint(l.getLatitude(), l.getLongitude(), l.getAltitude(), l.getSpeed(), l.isFromMockProvider());
                 }
 
                 @Override
@@ -290,7 +323,18 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void onStatusChanged(String provider, int status, Bundle extras) {
                 }
-            }, null);
+            };
+
+            mLocationManager.requestSingleUpdate(locationProvider, locationListener, null);
+
+            Runnable timeoutRunnable = () -> {
+                mLocationManager.removeUpdates(locationListener);
+
+                Toast.makeText(this, "Operation timed-out", Toast.LENGTH_LONG).show();
+                mProgressDialog.dismiss();
+            };
+            handler.postDelayed(timeoutRunnable, LOCATION_TIMEOUT_MS);
+            timeoutCancelSignal.setOnCancelListener(() -> handler.removeCallbacks(timeoutRunnable));
         }
     }
 
