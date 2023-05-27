@@ -173,8 +173,22 @@ public class MainActivity extends AppCompatActivity {
 
     private void displayPoint(double lat, double lon, double alt, double speed, boolean mock) {
         mBinding.locText.setVisibility(View.VISIBLE);
-        mBinding.locText.setText(getString(R.string.text_location_extra, lat, lon, alt, speed,
-                (mock) ? "true" : "false"));
+        mBinding.locText.setText(getString(R.string.text_location_android, lat, lon, alt, speed,
+                getString((mock) ? R.string.text_yes : R.string.text_no)));
+
+        displayPointOnMap(lat, lon);
+    }
+
+    private void displayPoint(double lat, double lon, String isp, String as) {
+        mBinding.locText.setVisibility(View.VISIBLE);
+        mBinding.locText.setText(getString(R.string.text_location_ip, lat, lon, isp, as));
+
+        displayPointOnMap(lat, lon);
+    }
+
+    private void displayPoint(double lat, double lon, int mcc, int mnc, int tac, int ci) {
+        mBinding.locText.setVisibility(View.VISIBLE);
+        mBinding.locText.setText(getString(R.string.text_location_bts, lat, lon, mcc, mnc, tac, ci));
 
         displayPointOnMap(lat, lon);
     }
@@ -194,7 +208,7 @@ public class MainActivity extends AppCompatActivity {
                 return;
             }
 
-            displayPoint(r.lat, r.lon);
+            displayPoint(r.lat, r.lon, r.isp, r.as);
         });
     }
 
@@ -226,7 +240,7 @@ public class MainActivity extends AppCompatActivity {
                 return;
             }
 
-            displayPoint(r.lat, r.lon);
+            displayPoint(r.lat, r.lon, r.mcc, r.mnc, r.tac, r.ci);
         });
     }
 

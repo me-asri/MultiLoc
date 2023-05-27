@@ -61,7 +61,7 @@ public class BTSLocation {
                         return;
                     }
 
-                    Call<Result> serviceCall = getBTSLocation(cell, callback);
+                    Call<APIResult> serviceCall = getBTSLocation(cell, callback);
                     if (cancelSignal != null && serviceCall != null) {
                         cancelSignal.setOnCancelListener(serviceCall::cancel);
                     }
@@ -77,15 +77,15 @@ public class BTSLocation {
                 return;
             }
 
-            Call<Result> serviceCall = getBTSLocation(cellInfo, callback);
+            Call<APIResult> serviceCall = getBTSLocation(cellInfo, callback);
             if (cancelSignal != null && serviceCall != null) {
                 cancelSignal.setOnCancelListener(serviceCall::cancel);
             }
         }
     }
 
-    private Call<Result> getBTSLocation(CellInfo cellInfo, BiConsumer<Result, Throwable> callback) {
-        Call<Result> serviceCall;
+    private Call<APIResult> getBTSLocation(CellInfo cellInfo, BiConsumer<Result, Throwable> callback) {
+        Call<APIResult> serviceCall;
 
         int mcc, mnc, tac, ci;
         if (cellInfo instanceof CellInfoLte) {
@@ -118,15 +118,19 @@ public class BTSLocation {
                 " CI: " + ci);
         serviceCall = service.getCellLocation(mcc, mnc, tac, ci);
 
-        serviceCall.enqueue(new Callback<Result>() {
+        serviceCall.enqueue(new Callback<APIResult>() {
             @Override
-            public void onResponse(@NonNull Call<Result> call, @NonNull Response<Result> response) {
-                Result result = response.body();
-                callback.accept(result, null);
+            public void onResponse(@NonNull Call<APIResult> call, @NonNull Response<APIResult> response) {
+                APIResult result = response.body();
+                if (result == null) {
+                    callback.accept(null, null);
+                } else {
+                    callback.accept(new Result(result, mcc, mnc, tac, ci), null);
+                }
             }
 
             @Override
-            public void onFailure(@NonNull Call<Result> call, @NonNull Throwable t) {
+            public void onFailure(@NonNull Call<APIResult> call, @NonNull Throwable t) {
                 if (!call.isCanceled()) {
                     callback.accept(null, t);
                 }
@@ -141,7 +145,29 @@ public class BTSLocation {
         public final double lat;
         public final int range;
 
-        public Result(String lon, String lat, String range) {
+        public final int mcc;
+        public final int mnc;
+        public final int tac;
+        public final int ci;
+
+        public Result(APIResult apiResult, int mcc, int mnc, int tac, int ci) {
+            this.lon = apiResult.lon;
+            this.lat = apiResult.lat;
+            this.range = apiResult.range;
+
+            this.mcc = mcc;
+            this.mnc = mnc;
+            this.tac = tac;
+            this.ci = ci;
+        }
+    }
+
+    private static class APIResult {
+        public final double lon;
+        public final double lat;
+        public final int range;
+
+        public APIResult(String lon, String lat, String range) {
             this.lon = Double.parseDouble(lon);
             this.lat = Double.parseDouble(lat);
             this.range = Integer.parseInt(range);
@@ -150,7 +176,7 @@ public class BTSLocation {
 
     private interface OpenCellIDService {
         @GET("searchCell.php")
-        Call<Result> getCellLocation(@Query("mcc") int mcc, @Query("mnc") int mnc, @Query("lac") int lac, @Query("cell_id") int ci);
+        Call<APIResult> getCellLocation(@Query("mcc") int mcc, @Query("mnc") int mnc, @Query("lac") int lac, @Query("cell_id") int ci);
     }
 
     public static class BTSException extends RuntimeException {
