@@ -150,7 +150,7 @@ public class MainActivity extends AppCompatActivity {
     private void displayPointOnMap(double lat, double lon) {
         GeoPoint geoPoint = new GeoPoint(lat, lon);
         // Zoom in
-        mMapController.setZoom(16.5);
+        mMapController.setZoom(17.5);
 
         // Center map to the specified location
         mMapController.setCenter(geoPoint);
@@ -184,7 +184,7 @@ public class MainActivity extends AppCompatActivity {
         displayPointOnMap(lat, lon);
     }
 
-    private void displayPoint(double lat, double lon, int mcc, int mnc, int tac, int ci) {
+    private void displayPoint(double lat, double lon, String mcc, String mnc, int tac, long ci) {
         mBinding.locText.setVisibility(View.VISIBLE);
         mBinding.locText.setText(getString(R.string.text_location_bts, lat, lon, mcc, mnc, tac, ci));
 

@@ -7,7 +7,7 @@
     <string name="text_location">Lat: %1$f - Lon: %2$f</string>
     <string name="text_location_android">Lat: %1$f - Lon: %2$f\nAltitude: %3$f - Speed: %4$f\nMock: %5$s</string>
     <string name="text_location_ip">Lat: %1$f - Lon: %2$f\nISP: %3$s\nAS: %4$s</string>
-    <string name="text_location_bts">Lat: %1$f - Lon: %2$f\nMCC: %3$d - MNC: %4$d - TAC: %5$d - CI: %6$d</string>
+    <string name="text_location_bts">Lat: %1$f - Lon: %2$f\nMCC: %3$s - MNC: %4$s - TAC: %5$d - CI: %6$d</string>
 
     <string name="text_yes">Yes</string>
     <string name="text_no">No</string>

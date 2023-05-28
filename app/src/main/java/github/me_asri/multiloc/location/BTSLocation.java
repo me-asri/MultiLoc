@@ -6,10 +6,12 @@ import android.os.Build;
 import android.os.CancellationSignal;
 import android.telephony.CellIdentityGsm;
 import android.telephony.CellIdentityLte;
+import android.telephony.CellIdentityNr;
 import android.telephony.CellIdentityWcdma;
 import android.telephony.CellInfo;
 import android.telephony.CellInfoGsm;
 import android.telephony.CellInfoLte;
+import android.telephony.CellInfoNr;
 import android.telephony.CellInfoWcdma;
 import android.telephony.TelephonyManager;
 import android.util.Log;
@@ -102,23 +104,34 @@ public class BTSLocation {
     private Call<APIResult> getBTSLocation(CellInfo cellInfo, BiConsumer<Result, Throwable> callback) {
         Call<APIResult> serviceCall;
 
-        int mcc, mnc, tac, ci;
-        if (cellInfo instanceof CellInfoLte) {
+        String mcc, mnc;
+        int tac;
+        long ci;
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q && cellInfo instanceof CellInfoNr) {
+            // ! UNTESTED !
+
+            CellIdentityNr identity = (CellIdentityNr) ((CellInfoNr) cellInfo).getCellIdentity();
+
+            mcc = identity.getMccString();
+            mnc = identity.getMncString();
+            tac = identity.getTac();
+            ci = identity.getNci();
+        } else if (cellInfo instanceof CellInfoLte) {
             CellIdentityLte identity = ((CellInfoLte) cellInfo).getCellIdentity();
-            mcc = identity.getMcc();
-            mnc = identity.getMnc();
+            mcc = Integer.toString(identity.getMcc());
+            mnc = Integer.toString(identity.getMnc());
             tac = identity.getTac();
             ci = identity.getCi();
         } else if (cellInfo instanceof CellInfoWcdma) {
             CellIdentityWcdma identity = ((CellInfoWcdma) cellInfo).getCellIdentity();
-            mcc = identity.getMcc();
-            mnc = identity.getMnc();
+            mcc = Integer.toString(identity.getMcc());
+            mnc = Integer.toString(identity.getMnc());
             tac = identity.getLac();
             ci = identity.getCid();
         } else if (cellInfo instanceof CellInfoGsm) {
             CellIdentityGsm identity = ((CellInfoGsm) cellInfo).getCellIdentity();
-            mcc = identity.getMcc();
-            mnc = identity.getMnc();
+            mcc = Integer.toString(identity.getMcc());
+            mnc = Integer.toString(identity.getMnc());
             tac = identity.getLac();
             ci = identity.getCid();
         } else {
@@ -165,12 +178,12 @@ public class BTSLocation {
         public final double lat;
         public final int range;
 
-        public final int mcc;
-        public final int mnc;
+        public final String mcc;
+        public final String mnc;
         public final int tac;
-        public final int ci;
+        public final long ci;
 
-        public Result(LocationResult locationResult, int mcc, int mnc, int tac, int ci) {
+        public Result(LocationResult locationResult, String mcc, String mnc, int tac, long ci) {
             this.lon = locationResult.lon;
             this.lat = locationResult.lat;
             this.range = locationResult.range;
@@ -231,7 +244,7 @@ public class BTSLocation {
 
     private interface OpenCellIDService {
         @GET("searchCell.php")
-        Call<APIResult> getCellLocation(@Query("mcc") int mcc, @Query("mnc") int mnc, @Query("lac") int lac, @Query("cell_id") int ci);
+        Call<APIResult> getCellLocation(@Query("mcc") String mcc, @Query("mnc") String mnc, @Query("lac") int lac, @Query("cell_id") long ci);
     }
 
     public static class BTSException extends RuntimeException {
