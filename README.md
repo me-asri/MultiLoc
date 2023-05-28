@@ -1,5 +1,5 @@
 # MultiLoc
-__MultiLoc__ is a simple app demonstrating various ways of obtaining location in Android devices.
+__MultiLoc__ is a simple app for demonstrating various methods of obtaining location in Android devices.
 
 ## Methods
 Methods implemented for obtaining location include:
@@ -45,4 +45,5 @@ OTHER DEALINGS IN THE SOFTWARE.
 ```
 
 ## Third-party Libraries
-[osmdroid](https://osmdroid.github.io/osmdroid/) - [Apache License, Version 2.0](https://osmdroid.github.io/osmdroid/project-license.html)
+- [osmdroid](https://osmdroid.github.io/osmdroid/) - [Apache License, Version 2.0](https://osmdroid.github.io/osmdroid/project-license.html)
+- [Retrofit](https://square.github.io/retrofit/) - [Apache License, Version 2.0](https://square.github.io/retrofit/)
