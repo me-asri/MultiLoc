@@ -4,8 +4,10 @@ import android.os.CancellationSignal;
 
 import androidx.annotation.NonNull;
 
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 
+import okhttp3.OkHttpClient;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -18,10 +20,16 @@ public class IPLocation {
 
     private final APIService mService;
 
-    public IPLocation() {
+    public IPLocation(long timeoutMillis) {
+        OkHttpClient httpClient = new OkHttpClient.Builder()
+                .readTimeout(timeoutMillis, TimeUnit.MILLISECONDS)
+                .connectTimeout(timeoutMillis, TimeUnit.MILLISECONDS)
+                .build();
+
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(API_URL)
                 .addConverterFactory(GsonConverterFactory.create())
+                .client(httpClient)
                 .build();
 
         mService = retrofit.create(APIService.class);

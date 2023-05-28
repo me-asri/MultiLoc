@@ -46,7 +46,7 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG = MainActivity.class.getName();
     private static final String SHARED_PREF_OSMDROID = TAG + ".osmdroid_pref";
     private static final OnlineTileSourceBase MAP_TILE_SOURCE = TileSourceFactory.MAPNIK;
-    private static final int LOCATION_TIMEOUT_MS = 8000;
+    private static final long LOCATION_TIMEOUT_MILLIS = 7000;
 
     private ActivityMainBinding mBinding;
 
@@ -60,8 +60,8 @@ public class MainActivity extends AppCompatActivity {
     private IMapController mMapController;
     private Marker mMapMarker;
 
-    private final IPLocation mIPLocation = new IPLocation();
-    private final BTSLocation mBTSLocation = new BTSLocation();
+    private final IPLocation mIPLocation = new IPLocation(LOCATION_TIMEOUT_MILLIS);
+    private final BTSLocation mBTSLocation = new BTSLocation(LOCATION_TIMEOUT_MILLIS);
 
     private final ActivityResultLauncher<String[]> multiPermRequest = registerForActivityResult(
             new ActivityResultContracts.RequestMultiplePermissions(), result -> {
@@ -298,7 +298,7 @@ public class MainActivity extends AppCompatActivity {
                     displayPoint(l.getLatitude(), l.getLongitude(), l.getAltitude(), l.getSpeed(), l.isFromMockProvider());
                 }
             });
-            handler.postDelayed(timeoutRunnable, LOCATION_TIMEOUT_MS);
+            handler.postDelayed(timeoutRunnable, LOCATION_TIMEOUT_MILLIS);
         } else {
             CancellationSignal timeoutCancelSignal = new CancellationSignal();
 
@@ -333,7 +333,7 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(this, "Operation timed-out", Toast.LENGTH_LONG).show();
                 mProgressDialog.dismiss();
             };
-            handler.postDelayed(timeoutRunnable, LOCATION_TIMEOUT_MS);
+            handler.postDelayed(timeoutRunnable, LOCATION_TIMEOUT_MILLIS);
             timeoutCancelSignal.setOnCancelListener(() -> handler.removeCallbacks(timeoutRunnable));
         }
     }

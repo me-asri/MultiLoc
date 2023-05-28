@@ -29,8 +29,10 @@ import com.google.gson.JsonSyntaxException;
 
 import java.lang.reflect.Type;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 
+import okhttp3.OkHttpClient;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -45,16 +47,22 @@ public class BTSLocation {
 
     private final OpenCellIDService service;
 
-    public BTSLocation() {
+    public BTSLocation(long timeoutMillis) {
         GsonBuilder gsonBuilder = new GsonBuilder();
         gsonBuilder.create();
 
         gsonBuilder.registerTypeAdapter(APIResult.class, new ResponseDeserializer());
         Gson customGson = gsonBuilder.create();
 
+        OkHttpClient httpClient = new OkHttpClient.Builder()
+                .readTimeout(timeoutMillis, TimeUnit.MILLISECONDS)
+                .connectTimeout(timeoutMillis, TimeUnit.MILLISECONDS)
+                .build();
+
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(API_URL)
                 .addConverterFactory(GsonConverterFactory.create(customGson))
+                .client(httpClient)
                 .build();
 
         service = retrofit.create(OpenCellIDService.class);
