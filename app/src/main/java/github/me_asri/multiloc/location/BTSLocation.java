@@ -17,6 +17,15 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresPermission;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParseException;
+import com.google.gson.JsonSyntaxException;
+
+import java.lang.reflect.Type;
 import java.util.List;
 import java.util.function.BiConsumer;
 
@@ -35,9 +44,15 @@ public class BTSLocation {
     private final OpenCellIDService service;
 
     public BTSLocation() {
+        GsonBuilder gsonBuilder = new GsonBuilder();
+        gsonBuilder.create();
+
+        gsonBuilder.registerTypeAdapter(APIResult.class, new ResponseDeserializer());
+        Gson customGson = gsonBuilder.create();
+
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(API_URL)
-                .addConverterFactory(GsonConverterFactory.create())
+                .addConverterFactory(GsonConverterFactory.create(customGson))
                 .build();
 
         service = retrofit.create(OpenCellIDService.class);
@@ -125,7 +140,12 @@ public class BTSLocation {
                 if (result == null) {
                     callback.accept(null, null);
                 } else {
-                    callback.accept(new Result(result, mcc, mnc, tac, ci), null);
+                    if (result.isSuccess()) {
+                        callback.accept(new Result(result.result, mcc, mnc, tac, ci), null);
+                    } else {
+                        callback.accept(null, BTSException.fromErrorResponse(result.error));
+                    }
+
                 }
             }
 
@@ -150,10 +170,10 @@ public class BTSLocation {
         public final int tac;
         public final int ci;
 
-        public Result(APIResult apiResult, int mcc, int mnc, int tac, int ci) {
-            this.lon = apiResult.lon;
-            this.lat = apiResult.lat;
-            this.range = apiResult.range;
+        public Result(LocationResult locationResult, int mcc, int mnc, int tac, int ci) {
+            this.lon = locationResult.lon;
+            this.lat = locationResult.lat;
+            this.range = locationResult.range;
 
             this.mcc = mcc;
             this.mnc = mnc;
@@ -162,15 +182,50 @@ public class BTSLocation {
         }
     }
 
-    private static class APIResult {
+    private static class LocationResult {
         public final double lon;
         public final double lat;
         public final int range;
 
-        public APIResult(String lon, String lat, String range) {
+        public LocationResult(String lon, String lat, String range) {
             this.lon = Double.parseDouble(lon);
             this.lat = Double.parseDouble(lat);
             this.range = Integer.parseInt(range);
+        }
+    }
+
+    private static class APIResult {
+        public final String error;
+        public final LocationResult result;
+
+
+        public APIResult(LocationResult locationResult) {
+            this.result = locationResult;
+            this.error = null;
+        }
+
+        public APIResult(String error) {
+            this.error = error;
+            this.result = null;
+        }
+
+        public boolean isSuccess() {
+            return (error == null);
+        }
+    }
+
+
+    private static class ResponseDeserializer implements JsonDeserializer<APIResult> {
+        @Override
+        public APIResult deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+            Gson gson = new Gson();
+
+            try {
+                LocationResult locationResult = gson.fromJson(json, LocationResult.class);
+                return new APIResult(locationResult);
+            } catch (JsonSyntaxException e) {
+                return new APIResult(json.getAsString());
+            }
         }
     }
 
@@ -180,11 +235,45 @@ public class BTSLocation {
     }
 
     public static class BTSException extends RuntimeException {
+        public BTSException(String message) {
+            super(message);
+        }
+
+        public static BTSException fromErrorResponse(String error) {
+            switch (error) {
+                case "Invalid Request":
+                    return new InvalidRequestException();
+
+                case "false":
+                    return new UnregisteredBTSException();
+
+                default:
+                    return new BTSException("Unknown error from backend");
+            }
+        }
     }
 
     public static class NoCellsException extends BTSException {
+        public NoCellsException() {
+            super("Phone not connected to any BTS");
+        }
     }
 
     public static class UnknownCellTypeException extends BTSException {
+        public UnknownCellTypeException() {
+            super("Phone connected to unknown BTS type");
+        }
+    }
+
+    public static class InvalidRequestException extends BTSException {
+        public InvalidRequestException() {
+            super("Received invalid request error from OpenCelliD");
+        }
+    }
+
+    public static class UnregisteredBTSException extends BTSException {
+        public UnregisteredBTSException() {
+            super("BTS not registered in OpenCelliD");
+        }
     }
 }

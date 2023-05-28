@@ -205,7 +205,7 @@ public class MainActivity extends AppCompatActivity {
                 } else if (t instanceof SocketTimeoutException) {
                     Toast.makeText(MainActivity.this, "Connection timed-out", Toast.LENGTH_LONG).show();
                 } else {
-                    Toast.makeText(MainActivity.this, "Exception occurred: " + t, Toast.LENGTH_LONG).show();
+                    Toast.makeText(MainActivity.this, t.getMessage(), Toast.LENGTH_LONG).show();
                 }
                 return;
             }
@@ -244,7 +244,7 @@ public class MainActivity extends AppCompatActivity {
                 } else if (t instanceof SocketTimeoutException) {
                     Toast.makeText(MainActivity.this, "Connection timed-out", Toast.LENGTH_LONG).show();
                 } else {
-                    Toast.makeText(MainActivity.this, "Exception occurred: " + t, Toast.LENGTH_LONG).show();
+                    Toast.makeText(MainActivity.this, t.getMessage(), Toast.LENGTH_LONG).show();
                 }
                 return;
             }
